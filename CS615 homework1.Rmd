@@ -1,0 +1,45 @@
+---
+title: "MA 615 homework 1"
+output:
+  pdf_document: default
+  html_document: default
+---
+##Question:
+A sloppy printer produces books with an average of 2 misprints per page. You want to know how many pages
+in a 50 page book will have more than k misprints. Make an n x k table that shows the probability that n or
+fewer pages in a 50 page book will have more than k misprints.
+Show and explain your work. Include equations and calculations to teach the reader how to solve the problem. Include an image of the book.
+
+##Introduction
+As we can see from the question the number of misprint in a page is following possion dstribution 
+$$P\left( x \right) = \frac{{e^{ - \lambda } \lambda ^x }}{{x!}}$$ with lambda = 2.
+In order to get the probability with more than k misprints on one page, we will use CDF to solve the possibility with less than k misprints. And $1-p$ is what we want.
+The second step of this question is that for each page, it follows binomial distribution:
+$${{n}\choose{k}} \cdot p^kq^{n-k}$$ where p is the possibility we get from previous step, and $q$ is $1-p$
+After That we write a loop to simulate all the combination of $n$ and $k$! 
+
+##Code
+```{r}
+library(knitr)
+n = 50 #the total number of pages in a book is 50
+k = 6 #maximum number of misprint is 6
+table = as.data.frame(matrix(ncol = k+1, nrow = n+1, dimnames = (list(c(0:50),c(0:6)))))
+for (i in 0:n){
+  for (j in 0:k){
+    p = ppois(j, lambda = 2, lower.tail = TRUE)
+    table[i+1, j+1] = pbinom(i, size = 50, prob = (1-p))
+  }
+  table
+}
+```
+
+##Table
+```{r}
+kable(table)
+```
+
+##Image
+```{r}
+include_graphics("~/Downloads/book.jpg")
+```
+
