@@ -1,0 +1,149 @@
+---
+title: "MA 615 assignment 3"
+author: "Xiangliang Liu(Ian), Zhaobin Liu, Yifudong, Jinfei Xue"
+output:
+  pdf_document: default
+  html_document: default
+---
+## 1.Packages we need. 
+```{r,warning = FALSE}
+library(readr)
+library(dplyr)
+library(knitr)
+library(readxl)
+library(knitr)
+library(ggplot2)
+```
+## 2.Data
+Description:
+We collected the data from "https://www.fincen.gov/reports/sar-stats" with Year, State, Industry,Suspicious_Activity, Instrument, Count of financial crimes as predictors. We specifically collected insurance industry data by selecting all the catagories with those variables.
+
+## 3.Import data and data cleaning.
+```{r,warning = FALSE}
+#There is a subtotal term in the table. We used filter() to eliminate all the rows with "[Total]" term. We name the new dataset as df and rename all thr variables.
+SARStats <- read_csv("SARStats.csv")
+df = filter(SARStats, Instrument != "[Total]")
+names(df) = c("Year", "State", "Industry","Suspicious_Activity", "Instrument","Count")
+```
+## 4.Discussion and visualization.
+
+###The count of financial crime in different States in the US. (Xiangliang)
+```{r}
+df %>% group_by(State)  %>%
+  summarize(Count = sum(as.integer(Count))) %>%
+  arrange(desc(Count)) %>% 
+  mutate(Percent = Count/sum(Count))%>%
+  slice(1:10) -> x
+
+kable(x, caption = "The number of suspicious activities in insurance company industry Reports by State")
+ggplot(x, aes(x = State, y = Count)) + ylab("count") +
+     geom_col(aes(x = State))
+```
+
+###The count of financial crime in the US by Instrument (Xiangliang)
+```{r}
+(table3 = df %>% group_by(Instrument)  %>%
+  summarize(Count = sum(as.integer(Count))) %>%
+  arrange(desc(Count))) %>%
+mutate(Percent = Count/sum(Count))->z
+ 
+kable(z, caption = "The number of suspicious activities in insurance company industry Reports by Instrument")
+ggplot(z, aes(x = Instrument, y = Count)) + ylab("count") +
+     geom_col(aes(x = Instrument))+theme( axis.text.x = element_text(size = 10,angle = 90,hjust = 1))
+```
+
+### The count of financial crime in the US by year(Jinfei)
+
+In the Suspicious Activities Report database, making a table of total number of reports by year to start.*
+```{r}
+df1<-select(df,Year, Count)
+df1 %>% group_by(Year)  %>%  
+  summarize(Count=sum(Count)) %>% 
+  arrange(desc(Count)) -> df1.s
+kable(df1.s, caption = " Table 1: Suspicious Activity Report by Year")
+```
+
+*From the table above, we can see it's in 2017 that the total number of financial crime reports by year is largest from 2012 to 2018.
+
+*In order to track the tendency further, we make the following time series plot using ggplot.*
+
+```{r}
+df1.ss<-arrange(df1.s,Year)
+ggplot(df1.ss,aes(x = Year, y = Count,group = 1)) + 
+  geom_line(color = "#FC4E07",size=1) +
+  xlab("Year") + ylab("Sum of Counts")
+```
+
+###Analyze the financial crisis in Massachusetts by Suspicious Acticity (yifu)
+```{r}
+#Use filter() and select() function to set up new dataset suspicious with predictors Year, Suspicious, 
+suspicious <- filter(df,State=="Massachusetts")
+
+suspicious <- select(suspicious,"Year","Suspicious_Activity", "Count")
+```
+*Now I get the ideal data for analysis. The first thing I want to know is which kind of insurance suspicious activities are the most common in Massachusetts. So I made a table to display the result:
+```{r}
+#group by suspicious activity
+suspicious %>%
+  group_by(Suspicious_Activity,Year)%>%
+  summarise(Count=sum(Count))%>%
+  arrange(desc(Year))%>%
+  mutate(percentage=Count/sum(Count))->suspicious1
+
+suspicious1%>%
+  group_by(Suspicious_Activity)%>%
+  summarise(Count=sum(Count))%>%
+  arrange(desc(Count))%>%
+  mutate(percentage=Count/sum(Count))%>%
+  slice(1:5)->suspicious2
+
+kable(suspicious2, caption = "Insurance Company Suspicious Activity")
+```
+discussion
+The result shows that the most common 4 kinds of insurance suspicious activities are Suspicion Concerning the Source of Funds, Suspicion Concerning the Source of Funds, Suspicion Concerning the Source of Funds, and Suspicion Concerning the Source of Funds. These 4 activities consist of most insurance suspicious activities in MA.  The top 5 activities even contains 90% of all activities.
+
+Then I want to know the trend of suspicious activities in MA, and whether those criminal activities are reduced effectively. So I draw a plot which contains both the data of suspicious activities and years.
+
+```{r}
+ggplot(data=suspicious2)+
+  geom_bar(width=0.5,stat="identity",mapping = aes(x=Suspicious_Activity, y=Count))+
+  theme( axis.text.x = element_text(size = 5,angle = 45,hjust = 1))
+#bar plot
+ggplot(suspicious1)+
+  geom_bar(stat="identity",mapping = aes(x=Suspicious_Activity, y=Count,fill=Year))+
+  theme( axis.text.x = element_text(size = 5,angle = 90,hjust = 1))
+```
+
+For this plot, the deeper the color is, the more remote the year is. So the top of the bar represents the suspicious activity data of 2012. 
+From the plot above, it's obvious that from 2012 to 2018, for the most 4 common activities shown above,  the number of insurance crime in Massachusetts is generally increasing. 
+It may be due to the increasing scale of insurance industry, as well as money inflation. So here we need more research on what factor mainly influence the increasing of insurance criminal activities. 
+Maybe we should pay attention to this 4 kind of criminal activities in the future. 
+
+### The count of financial crime in the Massachusetts by Instrument (Zhaobin)
+
+```{r}
+Instrument_of_MA = filter(df,State == "Massachusetts")
+Instrument_of_MA %>% group_by(Instrument) %>%
+  summarize(Count = sum(Count)) %>%
+  arrange(desc(Count)) -> c
+kable(c,caption = "Massachusetts instrument types and/or payment mechanisms used
+      in the suspicious activity")
+```
+
+```{r}
+ggplot(c, aes(x = Instrument, y = Count)) + ylab("count") +
+     geom_col(aes(x = Instrument))
+```
+
+By the table and histogram, we can see the order and comparision of the Massachusetts instruments types or payment mechanisms used in the suspicious activities as shown above. 
+
+
+
+##Conclusion
+In the US:
+By analyzing the praphes and charts in "Discussion", we found New York and Iowa have more financial crime counts. The most common financial crime is conducted by money order.
+From plot shows from 2012 to 2015, the total number of reports increases, and then decreases in 2016, but increases in 2017 followed by decreasing in 2018. It can be concluded that the total number of financial crimes reports fluctuates from 2012 to 2018.
+
+In Massachusetts:
+In the graph of 2012 to 2018, for the most 4 common activities shown above,  the number of insurance crime in Massachusetts is generally increasing. Also, money order is the instrument that leads to financial crime.
+
